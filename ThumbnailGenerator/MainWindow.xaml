@@ -1,0 +1,57 @@
+﻿<Window x:Class="ThumbnailGenerator.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ThumbnailGenerator"
+        mc:Ignorable="d"
+        Title="ThumbnailGenrator" MinHeight="300" MinWidth="450" Height="450" Width="800" x:Name="MainWindow1">
+    <Grid Margin="10px">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="155" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="80" />
+            <ColumnDefinition Width="155" />
+            <ColumnDefinition Width="80" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="30" />
+            <RowDefinition Height="30" />
+            <RowDefinition Height="30" />
+            <RowDefinition Height="*" />
+
+        </Grid.RowDefinitions>
+        <Label Grid.Row="0" Grid.Column="0">Source Directory</Label>
+        <TextBox Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="1" x:Name="tbSrcDir"></TextBox>
+        <Button  Grid.Row="0" Grid.Column="2" x:Name="btnSrcDir" Content="Browser" Click="btnSrcDir_Click"></Button>
+        <Label Grid.Row="0" Grid.Column="3">ThumbnailMaxWidth(px)</Label>
+        <TextBox Grid.Row="0" Grid.Column="4" x:Name="tbThumbnailMaxWidth" Text="{Binding ThumbnailMaxWidth,ElementName=MainWindow1}"></TextBox>
+
+        <Label Grid.Row="1" Grid.Column="0">Output Directory</Label>
+        <TextBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="1" x:Name="tbDestDir"></TextBox>
+        <Button Click="btnDestDir_Click" Grid.Row="1" Grid.Column="2" x:Name="btnDestDir" Content="Browser"></Button>
+        <Label Grid.Row="1" Grid.Column="3">MaxThreadCount</Label>
+        <ComboBox Grid.Row="1" Grid.Column="4" x:Name="cbMaxThreadCount" SelectedValue="{Binding MaxThreadCount,ElementName=MainWindow1}"></ComboBox>
+
+        <Label Grid.Row="2" Grid.Column="0">Images</Label>
+        <ProgressBar Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3" x:Name="pcbProcess" Minimum="0" Maximum="100"/>
+        <Button Grid.Row="2" Grid.Column="4" x:Name="btnStart" Content="Start" Click="btnStart_Click" IsEnabled="False"></Button>
+
+        <Grid Grid.ColumnSpan="4">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="4*" />
+                <ColumnDefinition Width="1*" />
+            </Grid.ColumnDefinitions>
+            <Grid Grid.Column="0" x:Name="col1"></Grid>
+            <Grid Grid.Column="1" x:Name="col2"></Grid>
+        </Grid>
+        <ListView x:Name="lvImages" Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="5">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="文件" Width="{Binding ActualWidth, ElementName=col1}" DisplayMemberBinding="{Binding File.FullName}"/>
+                    <GridViewColumn Header="状态" Width="{Binding ActualWidth, ElementName=col2}" DisplayMemberBinding="{Binding State}"/>
+                </GridView>
+            </ListView.View>
+        </ListView>
+    </Grid>
+</Window>

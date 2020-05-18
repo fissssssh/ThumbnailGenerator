@@ -3,3 +3,6 @@
 ################################################################################
 
 /packages
+/ThumbnailGenerator/bin/Debug
+/ThumbnailGenerator/obj/Debug
+/.vs/ThumbnailGenerator/v16
