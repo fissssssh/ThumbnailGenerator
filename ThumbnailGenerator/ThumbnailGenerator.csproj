@@ -63,6 +63,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Properties\Annotations.cs" />
     <Compile Include="ThreadCounter.cs" />
     <Compile Include="ThumbnailTool.cs" />
     <Page Include="MainWindow.xaml">
