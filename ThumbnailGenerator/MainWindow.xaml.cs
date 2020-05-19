@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -17,21 +18,15 @@ namespace ThumbnailGenerator
     /// </summary>
     public partial class MainWindow : Window
     {
-        public int CurrentThreadCount { get; set; } = 0;
-        public int MaxThreadCount { get; set; } = 4;
+        public ThreadCounter Counter { get; set; } = ThreadCounter.Instance;
         public int ThumbnailMaxWidth { get; set; } = 120;
 
-        private ThumbnailTool thumbnailTool;
-
-        private List<Thread> threads;
+        private List<Task> tasks;
 
         public MainWindow()
         {
             InitializeComponent();
-            thumbnailTool = new ThumbnailTool();
-            threads = new List<Thread>();
-            cbMaxThreadCount.ItemsSource = new int[] { 1, 2, 4, 8, 16 };
-            cbMaxThreadCount.SelectedValuePath = ".";
+            tasks = new List<Task>();
         }
 
         private async void btnSrcDir_Click(object sender, RoutedEventArgs e)
@@ -94,44 +89,35 @@ namespace ThumbnailGenerator
                 MessageBox.Show("You must ensure the thumbnail's max width is not null or empty!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
-            CurrentThreadCount = 0;
-            threads.Clear();
+            Counter.Reset();
+            tasks.Clear();
             var increment = 100f / lvImages.Items.Count;
             var outputDir = tbDestDir.Text;
             btnStart.IsEnabled = false;
             btnSrcDir.IsEnabled = false;
             btnDestDir.IsEnabled = false;
             tbThumbnailMaxWidth.IsEnabled = false;
-            cbMaxThreadCount.IsEnabled = false;
             foreach (ImageItem item in lvImages.Items)
             {
-                lvImages.SelectedItem = item;
-                lvImages.ScrollIntoView(lvImages.SelectedItem);
-                while (CurrentThreadCount >= MaxThreadCount) await Task.Delay(50);
-                Thread thread = new Thread(new ThreadStart(() =>
+                tasks.Add(Task.Run(async () =>
                 {
-                    GenerateThumbnail(item, ThumbnailMaxWidth, outputDir);
+                    Counter.Increase(1);
+                    item.State = State.Processing;
+                    await new ThumbnailTool().GenerateAndSaveAsync(item.File.FullName, ThumbnailMaxWidth, Path.Combine(outputDir, item.File.Name));
+                    item.State = State.Solved;
+                    await Dispatcher.InvokeAsync(() =>
+                    {
+                        pcbProcess.Value += increment;
+                    });
+                    Counter.Reduce(1);
                 }));
-                threads.Add(thread);
-                thread.Start();
-                pcbProcess.Value += increment;
             }
-            if (threads.Any(x => x.ThreadState != ThreadState.Stopped)) await Task.Delay(50);
+            await Task.WhenAll(tasks);
             pcbProcess.Value = 100;
             MessageBox.Show("Thumbnails generation done!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             btnSrcDir.IsEnabled = true;
             btnDestDir.IsEnabled = true;
             tbThumbnailMaxWidth.IsEnabled = true;
-            cbMaxThreadCount.IsEnabled = true;
-        }
-
-        private async void GenerateThumbnail(ImageItem item, int maxWidth, string outputDir)
-        {
-            CurrentThreadCount += 1;
-            item.State = State.Processing;
-            await thumbnailTool.GenerateAndSaveAsync(item.File.FullName, maxWidth, Path.Combine(outputDir, item.File.Name));
-            item.State = State.Solved;
-            CurrentThreadCount -= 1;
         }
     }
 }
