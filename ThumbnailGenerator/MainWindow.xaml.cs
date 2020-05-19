@@ -103,13 +103,19 @@ namespace ThumbnailGenerator
                 {
                     Counter.Increase(1);
                     item.State = State.Processing;
+                    Dispatcher.Invoke(() =>
+                    {
+                        lvImages.SelectedItem = item;
+                        lvImages.ScrollIntoView(item);
+
+                    });
                     await new ThumbnailTool().GenerateAndSaveAsync(item.File.FullName, ThumbnailMaxWidth, Path.Combine(outputDir, item.File.Name));
                     item.State = State.Solved;
+                    Counter.Reduce(1);
                     await Dispatcher.InvokeAsync(() =>
                     {
                         pcbProcess.Value += increment;
                     });
-                    Counter.Reduce(1);
                 }));
             }
             await Task.WhenAll(tasks);

@@ -30,19 +30,19 @@ namespace ThumbnailGenerator
         public async Task GenerateAndSaveAsync(string fileName, int maxWidth, string saveFileName)
         {
             var img = await GenerateAsync(fileName, maxWidth);
-            img.SaveAndReleaseAsync(saveFileName);
+            await img.SaveAndReleaseAsync(saveFileName);
         }
 
         public async Task GenerateAndSaveAsync(Stream stream, int maxWidth, string saveFileName)
         {
             var img = await GenerateAsync(stream, maxWidth);
-            img.SaveAndReleaseAsync(saveFileName);
+            await img.SaveAndReleaseAsync(saveFileName);
         }
 
         public async Task GenerateAndSaveAsync(Image img, int maxWidth, string saveFileName)
         {
             var thumbnail = await GenerateAsync(img, maxWidth);
-            img.SaveAndReleaseAsync(saveFileName);
+            await img.SaveAndReleaseAsync(saveFileName);
         }
     }
 
@@ -70,7 +70,7 @@ namespace ThumbnailGenerator
             return newBm;
         }
 
-        public static async void SaveAndReleaseAsync(this Image img, string filename)
+        public static async Task SaveAndReleaseAsync(this Image img, string filename)
         {
             await Task.Run(() =>
             {
