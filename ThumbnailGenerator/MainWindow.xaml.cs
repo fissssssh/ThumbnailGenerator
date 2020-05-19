@@ -3,42 +3,77 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
 using System.Windows;
 using System.Windows.Controls;
+using ThumbnailGenerator.Annotations;
 
 namespace ThumbnailGenerator
 {
     /// <summary>
     /// MainWindow.xaml 的交互逻辑
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class MainWindow : Window, INotifyPropertyChanged
     {
         public ThreadCounter Counter { get; set; } = ThreadCounter.Instance;
-        public int ThumbnailMaxWidth { get; set; } = 120;
 
-        private List<Task> tasks;
+        public int ThreadNum
+        {
+            get => _threadNum;
+            set
+            {
+                if (value != _threadNum)
+                {
+                    _threadNum = value;
+                    OnPropertyChanged(nameof(ThreadNum));
+                }
+            }
+        }
+
+        private static object LockObject = new object();
+
+        public int ThumbnailMaxWidth
+        {
+            get => _thumbnailMaxWidth;
+            set
+            {
+                if (value != _thumbnailMaxWidth)
+                {
+                    _thumbnailMaxWidth = value;
+                    OnPropertyChanged(nameof(ThumbnailMaxWidth));
+                }
+            }
+        }
+
+        private List<Task> tasks=new List<Task>();
+        private int _threadNum = 0;
+        private int _thumbnailMaxWidth = 120;
 
         public MainWindow()
         {
             InitializeComponent();
-            tasks = new List<Task>();
         }
 
         private async void btnSrcDir_Click(object sender, RoutedEventArgs e)
         {
             var path = SelectDirectory();
-            if (path != null)
+            if (Directory.Exists(path))
             {
                 tbSrcDir.Text = path;
                 var dirInfo = new DirectoryInfo(path);
                 var imageItems = await Task.Run(() =>
                 {
-                    return dirInfo.GetFiles().Where(x => IsStaticImage(MimeMapping.GetMimeMapping(x.Name))).OrderBy(x => x.LastWriteTime).Select(x => new ImageItem(x, State.Pending)).ToArray();
+                    return dirInfo.GetFiles()
+                        .Where(x => IsStaticImage(MimeMapping.GetMimeMapping(x.Name)))
+                        .OrderBy(x => x.LastWriteTime)
+                        .Select(x => new ImageItem(x, State.Pending))
+                        .ToArray();
                 });
                 lvImages.ItemsSource = new ObservableCollection<ImageItem>(imageItems);
                 btnStart.IsEnabled = true;
@@ -101,15 +136,35 @@ namespace ThumbnailGenerator
             {
                 tasks.Add(Task.Run(async () =>
                 {
-                    Counter.Increase(1);
-                    item.State = State.Processing;
-                    await new ThumbnailTool().GenerateAndSaveAsync(item.File.FullName, ThumbnailMaxWidth, Path.Combine(outputDir, item.File.Name));
-                    item.State = State.Solved;
+                    //Counter.Increase(1);
+                    lock (LockObject)
+                    {
+                        Dispatcher.InvokeAsync(() =>
+                       {
+                           ThreadNum++;
+                           Debug.WriteLine(ThreadNum);
+                       });
+                    }
                     await Dispatcher.InvokeAsync(() =>
                     {
+                        item.State = State.Processing;
+                    });
+                    await new ThumbnailTool().GenerateAndSaveAsync(item.File.FullName, ThumbnailMaxWidth, Path.Combine(outputDir, item.File.Name));
+                    await Dispatcher.InvokeAsync(() =>
+                    {
+                        item.State = State.Solved;
                         pcbProcess.Value += increment;
                     });
-                    Counter.Reduce(1);
+                    lock (LockObject)
+                    {
+                        Dispatcher.InvokeAsync(() =>
+                        {
+                            ThreadNum--;
+                            Debug.WriteLine(ThreadNum);
+
+                        });
+                    }
+                    //Counter.Reduce(1);
                 }));
             }
             await Task.WhenAll(tasks);
@@ -118,6 +173,14 @@ namespace ThumbnailGenerator
             btnSrcDir.IsEnabled = true;
             btnDestDir.IsEnabled = true;
             tbThumbnailMaxWidth.IsEnabled = true;
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        [NotifyPropertyChangedInvocator]
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }
