@@ -32,27 +32,61 @@ namespace ThumbnailGenerator
         private async void btnSrcDir_Click(object sender, RoutedEventArgs e)
         {
             var path = SelectDirectory();
-            if (path != null)
+            if (path == null)
             {
-                tbSrcDir.Text = path;
-                var dirInfo = new DirectoryInfo(path);
-                var imageItems = await Task.Run(() =>
-                {
-                    return dirInfo.GetFiles().Where(x => IsStaticImage(MimeMapping.GetMimeMapping(x.Name))).OrderBy(x => x.LastWriteTime).Select(x => new ImageItem(x, State.Pending)).ToArray();
-                });
-                lvImages.ItemsSource = new ObservableCollection<ImageItem>(imageItems);
-                btnStart.IsEnabled = true;
-                pcbProcess.Value = 0;
+                return;
             }
+            if (!Directory.Exists(path))
+            {
+                MessageBox.Show("No such directory!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+            var dirInfo = new DirectoryInfo(path);
+            var imageItems = await Task.Run(() =>
+            {
+                return dirInfo.GetFiles().Where(x => IsStaticImage(MimeMapping.GetMimeMapping(x.Name))).OrderBy(x => x.LastWriteTime).Select(x => new ImageItem(x, State.Pending)).ToArray();
+            });
+            if (imageItems.Length == 0)
+            {
+                MessageBox.Show("No static image file in this directory!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
+            tbSrcDir.Text = path;
+            lvImages.ItemsSource = new ObservableCollection<ImageItem>(imageItems);
+            btnStart.IsEnabled = true;
+            pcbProcess.Value = 0;
         }
 
         private void btnDestDir_Click(object sender, RoutedEventArgs e)
         {
-            var path = SelectDirectory();
-            if (path != null)
+            string path = null;
+            while (true)
             {
-                tbDestDir.Text = path;
+                path = SelectDirectory();
+                if (path == null)
+                {
+                    return;
+                }
+                if (!Directory.Exists(path))
+                {
+                    MessageBox.Show("No such directory!", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+
+                var dirInfo = new DirectoryInfo(path);
+
+                if (dirInfo.GetFiles().Length == 0)
+                {
+                    break;
+                }
+                var r = MessageBox.Show("There are files in this folder. In order to prevent the files in this folder from being lost, we recommend using an empty folder\nAre you sure want to use this folder?", "Error", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                if (r == MessageBoxResult.Yes)
+                {
+                    break;
+                }
             }
+            tbDestDir.Text = path;
+
         }
 
         private string SelectDirectory()
@@ -62,12 +96,12 @@ namespace ThumbnailGenerator
                 fbd.IsFolderPicker = true;
                 if (fbd.ShowDialog() == CommonFileDialogResult.Ok)
                 {
+
                     return fbd.FileName;
                 }
             }
             return null;
         }
-
         private bool IsStaticImage(string mimeType)
         {
             if (mimeType.Contains("image") && !mimeType.Contains("gif"))
