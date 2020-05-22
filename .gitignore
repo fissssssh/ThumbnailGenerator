@@ -6,3 +6,5 @@
 /ThumbnailGenerator/bin/Debug
 /ThumbnailGenerator/obj/Debug
 /.vs/ThumbnailGenerator/v16
+/.vs
+/ThumbnailGenerator/obj/Release
