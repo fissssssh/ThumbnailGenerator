@@ -8,7 +8,7 @@
         Title="ThumbnailGenrator" MinHeight="300" MinWidth="450" Height="450" Width="800" x:Name="MainWindow1">
     <Grid Margin="10px">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="155" />
+            <ColumnDefinition Width="110" />
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="80" />
             <ColumnDefinition Width="155" />
@@ -22,13 +22,13 @@
 
         </Grid.RowDefinitions>
         <Label Grid.Row="0" Grid.Column="0">Source Directory</Label>
-        <TextBox Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="1" x:Name="tbSrcDir"></TextBox>
+        <TextBox Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="1" x:Name="tbSrcDir" IsReadOnly="True"></TextBox>
         <Button  Grid.Row="0" Grid.Column="2" x:Name="btnSrcDir" Content="Browser" Click="btnSrcDir_Click"></Button>
         <Label Grid.Row="0" Grid.Column="3">ThumbnailMaxWidth(px)</Label>
         <TextBox Grid.Row="0" Grid.Column="4" x:Name="tbThumbnailMaxWidth" Text="{Binding ThumbnailMaxWidth,ElementName=MainWindow1}"></TextBox>
 
         <Label Grid.Row="1" Grid.Column="0">Output Directory</Label>
-        <TextBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="1" x:Name="tbDestDir"></TextBox>
+        <TextBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="1" x:Name="tbDestDir" IsReadOnly="True"></TextBox>
         <Button Click="btnDestDir_Click" Grid.Row="1" Grid.Column="2" x:Name="btnDestDir" Content="Browser"></Button>
         <Label Grid.Row="1" Grid.Column="3">CurrentThreadCount</Label>
         <Label Grid.Row="1" Grid.Column="4" Content="{Binding Counter.Count,ElementName=MainWindow1}"></Label>
@@ -48,8 +48,8 @@
         <ListView x:Name="lvImages" Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="5">
             <ListView.View>
                 <GridView>
-                    <GridViewColumn Header="文件" Width="{Binding ActualWidth, ElementName=col1}" DisplayMemberBinding="{Binding File.FullName}"/>
-                    <GridViewColumn Header="状态" Width="{Binding ActualWidth, ElementName=col2}" DisplayMemberBinding="{Binding State}"/>
+                    <GridViewColumn Header="FileName" Width="{Binding ActualWidth, ElementName=col1}" DisplayMemberBinding="{Binding File.FullName}"/>
+                    <GridViewColumn Header="State" Width="{Binding ActualWidth, ElementName=col2}" DisplayMemberBinding="{Binding State}"/>
                 </GridView>
             </ListView.View>
         </ListView>

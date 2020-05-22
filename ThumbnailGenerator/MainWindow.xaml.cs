@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -18,14 +19,16 @@ namespace ThumbnailGenerator
     /// </summary>
     public partial class MainWindow : Window
     {
+        private ThumbnailTool _tool;
         public ThreadCounter Counter { get; set; } = ThreadCounter.Instance;
-        public int ThumbnailMaxWidth { get; set; } = 120;
+        public int ThumbnailMaxWidth { get; set; } = 360;
 
         private List<Task> tasks;
 
         public MainWindow()
         {
             InitializeComponent();
+            _tool = new ThumbnailTool();
             tasks = new List<Task>();
         }
 
@@ -79,7 +82,7 @@ namespace ThumbnailGenerator
                 {
                     break;
                 }
-                var r = MessageBox.Show("There are files in this folder. In order to prevent the files in this folder from being lost, we recommend using an empty folder\nAre you sure want to use this folder?", "Error", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                var r = MessageBox.Show("There are files in this folder. In order to prevent the files in this folder from being lost, we recommend using an empty folder\nAre you sure want to use this folder?", "Warning", MessageBoxButton.YesNo, MessageBoxImage.Warning);
                 if (r == MessageBoxResult.Yes)
                 {
                     break;
@@ -131,6 +134,8 @@ namespace ThumbnailGenerator
             btnSrcDir.IsEnabled = false;
             btnDestDir.IsEnabled = false;
             tbThumbnailMaxWidth.IsEnabled = false;
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
             foreach (ImageItem item in lvImages.Items)
             {
                 tasks.Add(Task.Run(async () =>
@@ -143,7 +148,7 @@ namespace ThumbnailGenerator
                         lvImages.ScrollIntoView(item);
 
                     });
-                    await new ThumbnailTool().GenerateAndSaveAsync(item.File.FullName, ThumbnailMaxWidth, Path.Combine(outputDir, item.File.Name));
+                    await _tool.GenerateAndSaveAsync(item.File.FullName, ThumbnailMaxWidth, Path.Combine(outputDir, item.File.Name));
                     item.State = State.Solved;
                     Counter.Reduce(1);
                     await Dispatcher.InvokeAsync(() =>
@@ -154,7 +159,8 @@ namespace ThumbnailGenerator
             }
             await Task.WhenAll(tasks);
             pcbProcess.Value = 100;
-            MessageBox.Show("Thumbnails generation done!", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+            sw.Stop();
+            MessageBox.Show($"Thumbnails generation done! \nIt took {sw.ElapsedMilliseconds}ms", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
             btnSrcDir.IsEnabled = true;
             btnDestDir.IsEnabled = true;
             tbThumbnailMaxWidth.IsEnabled = true;

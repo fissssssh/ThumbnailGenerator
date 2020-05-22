@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel;
+using System.Diagnostics;
 
 namespace ThumbnailGenerator
 {
@@ -11,7 +12,6 @@ namespace ThumbnailGenerator
         }
 
         private int count = 0;
-
         public int Count
         {
             get => count;
